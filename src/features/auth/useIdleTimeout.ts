@@ -11,7 +11,7 @@ interface Options {
   enabled?: boolean
 }
 
-/** Returns `secondsLeft` while the warning is showing (null otherwise) and `stay()` to dismiss it. */
+/** Returns `secondsLeft` while the warning is showing (null otherwise), `stay()` to dismiss it, and `triggerWarning()` for demos. */
 export function useIdleTimeout({ idleMs, warnMs, onTimeout, enabled = true }: Options) {
   const last = useRef(Date.now())
   const warned = useRef(false)
@@ -24,6 +24,13 @@ export function useIdleTimeout({ idleMs, warnMs, onTimeout, enabled = true }: Op
     warned.current = false
     setSecondsLeft(null)
   }, [])
+
+  /** Show the warning now, as if the idle period had just elapsed. */
+  const triggerWarning = useCallback(() => {
+    last.current = Date.now() - idleMs
+    warned.current = true
+    setSecondsLeft(Math.ceil(warnMs / 1000))
+  }, [idleMs, warnMs])
 
   useEffect(() => {
     if (!enabled) return
@@ -52,5 +59,5 @@ export function useIdleTimeout({ idleMs, warnMs, onTimeout, enabled = true }: Op
     }
   }, [enabled, idleMs, warnMs])
 
-  return { secondsLeft, stay }
+  return { secondsLeft, stay, triggerWarning }
 }

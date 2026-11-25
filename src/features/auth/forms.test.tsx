@@ -13,7 +13,7 @@ beforeEach(() => { auth.login.mockReset(); auth.signup.mockReset() })
 describe('LoginPage', () => {
   it('shows inline errors on submit and focuses the first invalid field', async () => {
     renderPage(<LoginPage />)
-    await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(await screen.findByText(/email is required/i)).toBeInTheDocument()
     expect(screen.getByText(/password is required/i)).toBeInTheDocument()
     expect(screen.getByLabelText('Email')).toHaveFocus()
@@ -35,9 +35,9 @@ describe('LoginPage', () => {
     renderPage(<LoginPage />)
     await userEvent.type(screen.getByLabelText('Email'), 'USER@example.test ')
     await userEvent.type(screen.getByLabelText('Password'), 'whatever')
-    const btn = screen.getByRole('button', { name: 'Log in' })
+    const btn = screen.getByRole('button', { name: 'Sign in' })
     await userEvent.click(btn)
-    const busy = await screen.findByRole('button', { name: /logging in/i })
+    const busy = await screen.findByRole('button', { name: /signing in/i })
     expect(busy).toBeDisabled()
     await userEvent.click(busy)
     resolve()
@@ -50,7 +50,7 @@ describe('LoginPage', () => {
     renderPage(<LoginPage />)
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.test')
     await userEvent.type(screen.getByLabelText('Password'), 'x')
-    await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Invalid email or password')
   })
 
@@ -71,8 +71,8 @@ describe('LoginPage', () => {
 })
 
 describe('SignupPage', () => {
-  const fill = async (over: Partial<Record<'Name' | 'Email' | 'Password' | 'Confirm password', string>> = {}) => {
-    const v = { Name: 'Test User', Email: 'new@example.test', Password: 'Str0ng-Password!', 'Confirm password': 'Str0ng-Password!', ...over }
+  const fill = async (over: Partial<Record<'Full name' | 'Work email' | 'Password' | 'Confirm password', string>> = {}) => {
+    const v = { 'Full name': 'Test User', 'Work email': 'new@example.test', Password: 'Str0ng-Password!', 'Confirm password': 'Str0ng-Password!', ...over }
     for (const [label, value] of Object.entries(v)) await userEvent.type(screen.getByLabelText(label), value)
   }
 
@@ -87,7 +87,7 @@ describe('SignupPage', () => {
   it('requires the terms checkbox and matching passwords', async () => {
     renderPage(<SignupPage />)
     await fill({ 'Confirm password': 'different' })
-    await userEvent.click(screen.getByRole('button', { name: 'Sign up' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
     expect(await screen.findByText(/do not match/i)).toBeInTheDocument()
     expect(screen.getByText('You must accept the terms')).toBeInTheDocument()
     expect(auth.signup).not.toHaveBeenCalled()
@@ -97,9 +97,9 @@ describe('SignupPage', () => {
     auth.signup.mockRejectedValue(new ApiError(409, 'Email already registered', { fieldErrors: { email: 'Email already registered' } }))
     renderPage(<SignupPage />)
     await fill()
-    await userEvent.click(screen.getByRole('checkbox', { name: /accept the terms/i }))
-    await userEvent.click(screen.getByRole('button', { name: 'Sign up' }))
-    const email = screen.getByLabelText('Email')
+    await userEvent.click(screen.getByRole('checkbox', { name: /agree to the terms/i }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    const email = screen.getByLabelText('Work email')
     await waitFor(() => expect(email).toHaveAttribute('aria-invalid', 'true'))
     expect(screen.getByText('Email already registered')).toBeInTheDocument()
     expect(email).toHaveFocus()

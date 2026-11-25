@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api/client'
+import { AuthLayout } from '../../components/AuthLayout'
+import { MailIcon } from '../../components/Brand'
 import { emailMemory } from './useEmailMemory'
 import { useAuth } from './AuthContext'
 
@@ -16,16 +18,23 @@ function VerifyWithToken({ token }: { token: string }) {
     gcTime: Infinity,
   })
   return (
-    <main className="card">
-      <h1>Email verification</h1>
-      {q.isPending && <p role="status" aria-busy="true">Verifying…</p>}
-      {q.isSuccess && <p role="status">Your email is verified. <Link to="/login">Log in</Link></p>}
-      {q.isError && (
-        <div role="alert" className="alert err">
-          {q.error instanceof ApiError ? q.error.message : 'Could not verify your email.'}
-        </div>
-      )}
-    </main>
+    <AuthLayout>
+      <div className="stack">
+        <h1 className="page-title">Email verification</h1>
+        {q.isPending && <p className="page-sub" role="status" aria-busy="true">Verifying…</p>}
+        {q.isSuccess && (
+          <>
+            <p className="page-sub" role="status">Your email is verified.</p>
+            <Link className="btn btn-primary" to="/login">Sign in</Link>
+          </>
+        )}
+        {q.isError && (
+          <div role="alert" className="alert alert-error">
+            {q.error instanceof ApiError ? q.error.message : 'Could not verify your email.'}
+          </div>
+        )}
+      </div>
+    </AuthLayout>
   )
 }
 
@@ -46,17 +55,22 @@ function VerifyPrompt() {
   }, [cooldown])
 
   return (
-    <main className="card">
-      <h1>Verify your email</h1>
-      <p>We sent a verification link{email ? <> to <strong>{email}</strong></> : null}. Open it to finish setting up your account.</p>
-      <p className="demo">Mock app: find the link in the <Link to="/mock-inbox">mock inbox</Link>.</p>
-      {resend.isSuccess && <p role="status">If that account needs verification, we sent another email.</p>}
-      {resend.isError && <div role="alert" className="alert err">Could not resend. Try again.</div>}
-      <button type="button" className="primary" disabled={!email || resend.isPending || cooldown > 0} onClick={() => resend.mutate()}>
-        {resend.isPending ? 'Sending…' : cooldown > 0 ? `Resend available in ${cooldown}s` : 'Resend email'}
-      </button>
-      <p className="links"><Link to="/login">Back to log in</Link></p>
-    </main>
+    <AuthLayout>
+      <div className="stack" style={{ alignItems: 'flex-start' }}>
+        <div className="icon-tile"><MailIcon /></div>
+        <div>
+          <h1 className="page-title">Verify your email</h1>
+          <p className="page-sub">We sent a verification link{email ? <> to <strong>{email}</strong></> : null}. Open it to finish setting up your account.</p>
+        </div>
+        <p className="demo">Mock app: find the link in the <Link to="/mock-inbox">mock inbox</Link>.</p>
+        {resend.isSuccess && <div role="status" className="alert alert-success">If that account needs verification, we sent another email.</div>}
+        {resend.isError && <div role="alert" className="alert alert-error">Could not resend. Try again.</div>}
+        <button type="button" className="btn btn-primary btn-block" disabled={!email || resend.isPending || cooldown > 0} onClick={() => resend.mutate()}>
+          {resend.isPending ? 'Sending…' : cooldown > 0 ? `Resend available in ${cooldown}s` : 'Resend email'}
+        </button>
+        <p className="fineprint"><Link className="link" to="/login">Back to sign in</Link></p>
+      </div>
+    </AuthLayout>
   )
 }
 

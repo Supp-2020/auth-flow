@@ -4,6 +4,17 @@ A learning project: login, signup, password reset, email verification, protected
 
 > **The mock auth is for learning only and is not secure.** Never enter real passwords or real user data. All "users" below are fake. Real security is enforced by the server; every client-side check here (guards, role checks, validation) exists for UX only.
 
+## Design
+
+The UI follows the "Auth Flow UI" design canvas (brand name **Northwind**): split sign-in layout with a blue brand panel, Space Grotesk headings, Inter body text, `#2563EB` primary actions, a signed-in header with avatar and **Sign out**, a dashboard with a live access-token countdown, session-state demo controls and a mock API log, and the "Still there?" inactivity dialog. Fonts are self-hosted via `@fontsource-variable` (no Google Fonts requests). Design tokens live at the top of `src/styles/app.css`.
+
+Deviations from the design, on purpose:
+- Passwords need **12+ characters** and a rules checklist (the design says 8) to meet the project requirements; signup also has a confirm-password field and a terms checkbox.
+- The brand panel's subtitle uses `#EFF6FF` instead of `#DBEAFE` so it passes WCAG AA contrast on the blue.
+- The design is light-only; a dark theme is derived from it and follows the OS setting.
+- "Continue with Google" is a UI preview only.
+- On phones the brand panel collapses to a logo band.
+
 ## Run it
 
 ```powershell

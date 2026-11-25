@@ -6,6 +6,7 @@ import { refreshAccessToken } from '../../lib/api/refresh'
 import { msUntilRefresh } from '../../lib/api/tokenExpiry'
 import { tokens } from '../../lib/api/tokens'
 import { broadcast, onTabMessage } from '../../lib/api/tabSync'
+import { clearRequestLog } from '../../lib/api/requestLog'
 import { notice } from './notice'
 import type { AuthStatus, TokenResponse, User } from './types'
 
@@ -128,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try { await api('/auth/logout', { method: 'POST', json: { refreshToken }, auth: false }) } catch { /* best effort */ }
     tokens.clear()
     qc.clear()                       // drop all cached server data
+    clearRequestLog()
     setUser(null)
     setSessionExpired(false)
     setStatus('unauthenticated')

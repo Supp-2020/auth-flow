@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useSearchParams } from 'react-router-dom'
 import { resetSchema, type ResetInput } from '../../lib/validation/auth'
 import { api, ApiError } from '../../lib/api/client'
+import { AuthLayout } from '../../components/AuthLayout'
 import { PasswordField } from './components/PasswordField'
 
 export function ResetPasswordPage() {
@@ -20,21 +21,27 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <main className="card">
-        <h1>Reset link problem</h1>
-        <div role="alert" className="alert err">This reset link is missing its token.</div>
-        <p><Link to="/forgot-password">Request a new link</Link></p>
-      </main>
+      <AuthLayout>
+        <div className="stack">
+          <h1 className="page-title">Reset link problem</h1>
+          <div role="alert" className="alert alert-error">This reset link is missing its token.</div>
+          <Link className="btn btn-primary" to="/forgot-password">Request a new link</Link>
+        </div>
+      </AuthLayout>
     )
   }
 
   if (done) {
     return (
-      <main className="card">
-        <h1>Password updated</h1>
-        <p role="status">You can now log in with your new password. Other devices were signed out.</p>
-        <p><Link to="/login">Go to log in</Link></p>
-      </main>
+      <AuthLayout>
+        <div className="stack">
+          <div>
+            <h1 className="page-title">Password updated</h1>
+            <p className="page-sub" role="status">You can now sign in with your new password. Other devices were signed out.</p>
+          </div>
+          <Link className="btn btn-primary" to="/login">Go to sign in</Link>
+        </div>
+      </AuthLayout>
     )
   }
 
@@ -49,20 +56,25 @@ export function ResetPasswordPage() {
   })
 
   return (
-    <main className="card">
-      <h1>Choose a new password</h1>
-      {formError && (
-        <div role="alert" className="alert err">
-          {formError} <Link to="/forgot-password">Request a new link</Link>
+    <AuthLayout>
+      <div className="stack">
+        <div>
+          <h1 className="page-title">Choose a new password</h1>
+          <p className="page-sub">Pick something you have not used before.</p>
         </div>
-      )}
-      <form onSubmit={onSubmit} noValidate>
-        <PasswordField label="New password" autoComplete="new-password" meterValue={password} error={errors.password?.message} {...register('password')} />
-        <PasswordField label="Confirm new password" autoComplete="new-password" error={errors.confirmPassword?.message} {...register('confirmPassword')} />
-        <button type="submit" className="primary" disabled={isSubmitting} aria-busy={isSubmitting}>
-          {isSubmitting ? 'Saving…' : 'Update password'}
-        </button>
-      </form>
-    </main>
+        {formError && (
+          <div role="alert" className="alert alert-error">
+            {formError} <Link to="/forgot-password">Request a new link</Link>
+          </div>
+        )}
+        <form onSubmit={onSubmit} noValidate className="stack" style={{ gap: 16 }}>
+          <PasswordField label="New password" autoComplete="new-password" meterValue={password} error={errors.password?.message} {...register('password')} />
+          <PasswordField label="Confirm new password" autoComplete="new-password" error={errors.confirmPassword?.message} {...register('confirmPassword')} />
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting} aria-busy={isSubmitting}>
+            {isSubmitting ? 'Saving…' : 'Update password'}
+          </button>
+        </form>
+      </div>
+    </AuthLayout>
   )
 }

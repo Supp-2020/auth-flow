@@ -1,5 +1,9 @@
 import { authEvents } from './authEvents'
+import { logRequest } from './requestLog'
 import { tokens } from './tokens'
+
+/** How many times the refresh token has rotated in this tab (shown on the dashboard). */
+export const sessionStats = { refreshes: 0 }
 
 export class RefreshError extends Error {
   /** true when the server rejected the refresh token (session is really over); false for network/5xx. */
@@ -39,13 +43,22 @@ async function doRefresh(): Promise<string> {
       body: JSON.stringify({ refreshToken }),
     })
   } catch {
+    logRequest('POST', '/api/auth/refresh', 'network error')
     throw new RefreshError('Network error while refreshing', false)
   }
-  if (res.status === 401 || res.status === 400) throw expire('Refresh token rejected')
-  if (!res.ok) throw new RefreshError(`Refresh failed (${res.status})`, false)
+  if (res.status === 401 || res.status === 400) {
+    logRequest('POST', '/api/auth/refresh', res.status, '(refresh expired)')
+    throw expire('Refresh token rejected')
+  }
+  if (!res.ok) {
+    logRequest('POST', '/api/auth/refresh', res.status)
+    throw new RefreshError(`Refresh failed (${res.status})`, false)
+  }
+  logRequest('POST', '/api/auth/refresh', res.status, '(rotated)')
   const body = (await res.json()) as { accessToken: string; refreshToken: string }
   tokens.setAccess(body.accessToken)
   tokens.setRefresh(body.refreshToken, tokens.isPersistent())
+  sessionStats.refreshes++
   authEvents.emit('token-refreshed')
   return body.accessToken
 }

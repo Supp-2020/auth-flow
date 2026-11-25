@@ -36,7 +36,7 @@ test('axe: 403 page (non-admin on /admin)', async ({ page }) => {
 
 test('axe: signup form with validation errors shown', async ({ page }) => {
   await page.goto('/signup')
-  await page.getByRole('button', { name: 'Sign up' }).click()
+  await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByText('Name must be at least 2 characters')).toBeVisible()
   await expectNoViolations(page)
 })

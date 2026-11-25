@@ -1,4 +1,5 @@
 import { refreshAccessToken, RefreshError } from './refresh'
+import { logRequest } from './requestLog'
 import { tokens } from './tokens'
 
 export class ApiError extends Error {
@@ -18,13 +19,17 @@ async function send(path: string, { json, auth = true, headers, ...rest }: Optio
   const h = new Headers(headers)
   if (json !== undefined) h.set('Content-Type', 'application/json')
   if (auth && accessToken) h.set('Authorization', `Bearer ${accessToken}`)
+  const method = (rest.method ?? 'GET').toUpperCase()
   try {
-    return await fetch(new URL(`/api${path}`, location.origin).href, {
+    const res = await fetch(new URL(`/api${path}`, location.origin).href, {
       ...rest,
       headers: h,
       body: json !== undefined ? JSON.stringify(json) : rest.body,
     })
+    logRequest(method, `/api${path}`, res.status)
+    return res
   } catch {
+    logRequest(method, `/api${path}`, 'network error')
     throw new ApiError(0, 'Network error. Check your connection and try again.')
   }
 }

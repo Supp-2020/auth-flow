@@ -7,8 +7,8 @@ import type { Role } from '../features/auth/types'
 
 export function CheckingSession() {
   return (
-    <main className="card" role="status" aria-busy="true">
-      <p>Checking your session…</p>
+    <main className="auth-main" style={{ minHeight: '100vh' }} role="status" aria-busy="true">
+      <p className="page-sub">Checking your session…</p>
     </main>
   )
 }

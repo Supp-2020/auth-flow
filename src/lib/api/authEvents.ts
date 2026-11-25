@@ -1,4 +1,4 @@
-export type AuthEvent = 'session-expired' | 'token-refreshed'
+export type AuthEvent = 'session-expired' | 'token-refreshed' | 'demo-idle-warning'
 
 const target = new EventTarget()
 

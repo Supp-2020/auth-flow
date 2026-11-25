@@ -5,12 +5,12 @@ test('sign up, verify email from the mock inbox, then log in', async ({ page }) 
   const email = `new-${Date.now()}@example.test`
   const password = 'Str0ng-Password!'
   await page.goto('/signup')
-  await page.getByLabel('Name').fill('New Person')
+  await page.getByLabel('Full name').fill('New Person')
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password', { exact: true }).fill(password)
   await page.getByLabel('Confirm password').fill(password)
-  await page.getByLabel(/accept the terms/i).check()
-  await page.getByRole('button', { name: 'Sign up' }).click()
+  await page.getByLabel(/agree to the terms/i).check()
+  await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible()
 
   await page.goto('/mock-inbox')
@@ -23,12 +23,12 @@ test('sign up, verify email from the mock inbox, then log in', async ({ page }) 
 
 test('signing up with an existing email shows a field error', async ({ page }) => {
   await page.goto('/signup')
-  await page.getByLabel('Name').fill('Dup')
+  await page.getByLabel('Full name').fill('Dup')
   await page.getByLabel('Email').fill(USER.email)
   await page.getByLabel('Password', { exact: true }).fill('Str0ng-Password!')
   await page.getByLabel('Confirm password').fill('Str0ng-Password!')
-  await page.getByLabel(/accept the terms/i).check()
-  await page.getByRole('button', { name: 'Sign up' }).click()
+  await page.getByLabel(/agree to the terms/i).check()
+  await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByText('Email already registered')).toBeVisible()
   await expect(page.getByLabel('Email')).toHaveAttribute('aria-invalid', 'true')
 })
@@ -38,7 +38,7 @@ test('protected page redirects to login, then back after sign-in', async ({ page
   await expect(page).toHaveURL(/\/login\?redirect=%2Fsettings/)
   await page.getByLabel('Email').fill(USER.email)
   await page.getByLabel('Password', { exact: true }).fill(USER.password)
-  await page.getByRole('button', { name: 'Log in' }).click()
+  await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
   await expect(page).toHaveURL(/\/settings$/)
 })
@@ -47,7 +47,7 @@ test('login ignores an open-redirect target', async ({ page }) => {
   await page.goto('/login?redirect=https://evil.test')
   await page.getByLabel('Email').fill(USER.email)
   await page.getByLabel('Password', { exact: true }).fill(USER.password)
-  await page.getByRole('button', { name: 'Log in' }).click()
+  await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page).toHaveURL(/localhost:\d+\/dashboard$/)
 })
 
@@ -55,14 +55,14 @@ test('bad credentials show a generic error', async ({ page }) => {
   await page.goto('/login')
   await page.getByLabel('Email').fill(USER.email)
   await page.getByLabel('Password', { exact: true }).fill('wrong-password')
-  await page.getByRole('button', { name: 'Log in' }).click()
+  await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page.getByRole('alert')).toContainText('Invalid email or password')
 })
 
 test('session survives a reload when remembered', async ({ page }) => {
   await login(page, USER, { remember: true })
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Good to see you/ })).toBeVisible()
 })
 
 test('expired session (refresh rejected) redirects to login with a message', async ({ page }) => {
@@ -78,7 +78,7 @@ test('expired session (refresh rejected) redirects to login with a message', asy
   })
   await page.getByRole('link', { name: 'Settings' }).click()
   await expect(page).toHaveURL(/\/login\?expired=1/)
-  await expect(page.getByText('Your session expired. Please log in again.')).toBeVisible()
+  await expect(page.getByText('Your session expired for your security. Please sign in again.')).toBeVisible()
 })
 
 test('a silent refresh keeps the user signed in', async ({ page }) => {
@@ -104,7 +104,7 @@ test('non-admin gets 403; admin can open /admin', async ({ page }) => {
 
 test('admin can list users', async ({ page }) => {
   await login(page, ADMIN)
-  await page.getByRole('link', { name: /manage users/i }).click()
+  await page.getByRole('link', { name: 'Admin' }).click()
   await expect(page.getByRole('heading', { name: 'Admin: users' })).toBeVisible()
   await expect(page.getByText('admin@example.test', { exact: false }).first()).toBeVisible()
 })
@@ -119,9 +119,9 @@ test('logging out in one tab logs out the other', async ({ context }) => {
   await login(a, USER, { remember: true })
   const b = await context.newPage()
   await b.goto('/dashboard')
-  await expect(b.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+  await expect(b.getByRole('heading', { name: /Good to see you/ })).toBeVisible()
 
-  await a.getByRole('button', { name: 'Log out' }).click()
+  await a.getByRole('button', { name: 'Sign out' }).click()
   await expect(a).toHaveURL(/\/login/)
   await expect(b).toHaveURL(/\/login/)
   await expect(b.getByText('You were logged out in another tab.')).toBeVisible()

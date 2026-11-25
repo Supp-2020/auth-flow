@@ -25,7 +25,7 @@ export const resetTokens = new Map<string, { userId: string; exp: number }>()
 export const verifyTokens = new Map<string, { userId: string }>()
 /** Fake outbox: stands in for real email so the flows are testable without a backend. */
 export const mailbox: { id: string; to: string; subject: string; link: string; at: number }[] = []
-export const RESET_TTL_MS = 15 * 60_000
+export const RESET_TTL_MS = 30 * 60_000   // matches the "expires in 30 minutes" copy
 
 export function sendMail(to: string, subject: string, link: string) {
   mailbox.unshift({ id: crypto.randomUUID(), to, subject, link, at: Date.now() })
