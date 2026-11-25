@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -9,6 +9,7 @@ import { useAuth } from './AuthContext'
 import { TextField } from './components/TextField'
 import { PasswordField } from './components/PasswordField'
 import { emailMemory } from './useEmailMemory'
+import { notice } from './notice'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -16,6 +17,8 @@ export function LoginPage() {
   const navigate = useNavigate()
   const redirect = safeRedirect(params.get('redirect'))
   const [formError, setFormError] = useState<string | null>(null)
+  const [inactivity] = useState(() => notice.peek())
+  useEffect(() => notice.clear(), [])
   const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     mode: 'onTouched',
@@ -38,7 +41,9 @@ export function LoginPage() {
   return (
     <main className="card">
       <h1>Log in</h1>
-      {params.get('expired') && <div role="status" className="alert warn">Your session expired. Please log in again.</div>}
+      {inactivity === 'idle' && <div role="status" className="alert warn">You were logged out due to inactivity.</div>}
+      {inactivity === 'other-tab' && <div role="status" className="alert warn">You were logged out in another tab.</div>}
+      {params.get('expired') &&<div role="status" className="alert warn">Your session expired. Please log in again.</div>}
       {formError && <div role="alert" className="alert err">{formError}</div>}
       <form onSubmit={onSubmit} noValidate>
         <TextField label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register('email')} />

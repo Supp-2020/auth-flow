@@ -1,11 +1,15 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { PublicOnly, RequireAuth } from './guards'
+import { PublicOnly, RequireAuth, RequireRole } from './guards'
 import type { AuthStatus } from '../features/auth/types'
 
 let mockStatus: AuthStatus = 'loading'
-vi.mock('../features/auth/AuthContext', () => ({ useAuth: () => ({ status: mockStatus }) }))
+let mockExpired = false
+let mockRole: 'user' | 'admin' = 'user'
+vi.mock('../features/auth/AuthContext', () => ({
+  useAuth: () => ({ status: mockStatus, sessionExpired: mockExpired, user: { role: mockRole }, logout: vi.fn() }),
+}))
 
 const Where = () => { const l = useLocation(); return <p>at {l.pathname}{l.search}</p> }
 
@@ -37,6 +41,36 @@ describe('route guards', () => {
       </Routes>
     ))
     expect(screen.getByText(`at /login?redirect=${encodeURIComponent('/secret?x=1')}`)).toBeInTheDocument()
+  })
+  it('adds expired=1 to the login redirect after the session expired', () => {
+    mockStatus = 'unauthenticated'
+    mockExpired = true
+    renderAt('/secret', (
+      <Routes>
+        <Route element={<RequireAuth />}><Route path="/secret" element={<p>secret content</p>} /></Route>
+        <Route path="/login" element={<Where />} />
+      </Routes>
+    ))
+    mockExpired = false
+    expect(screen.getByText(`at /login?expired=1&redirect=${encodeURIComponent('/secret')}`)).toBeInTheDocument()
+  })
+  it('shows the 403 page, not the content, for the wrong role', () => {
+    mockStatus = 'authenticated'
+    mockRole = 'user'
+    renderAt('/admin', (
+      <Routes><Route element={<RequireRole role="admin" />}><Route path="/admin" element={<p>admin content</p>} /></Route></Routes>
+    ))
+    expect(screen.getByText(/access denied/i)).toBeInTheDocument()
+    expect(screen.queryByText('admin content')).not.toBeInTheDocument()
+  })
+  it('lets the right role through', () => {
+    mockStatus = 'authenticated'
+    mockRole = 'admin'
+    renderAt('/admin', (
+      <Routes><Route element={<RequireRole role="admin" />}><Route path="/admin" element={<p>admin content</p>} /></Route></Routes>
+    ))
+    expect(screen.getByText('admin content')).toBeInTheDocument()
+    mockRole = 'user'
   })
   it('renders protected content when authenticated', () => {
     mockStatus = 'authenticated'

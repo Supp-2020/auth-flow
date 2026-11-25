@@ -21,8 +21,8 @@ export const PasswordField = forwardRef<HTMLInputElement, Props>(function Passwo
       <label htmlFor={id}>{label}</label>
       <div className="input-row">
         <input id={id} ref={ref} type={shown ? 'text' : 'password'} aria-invalid={!!error} aria-describedby={describedBy} {...input} />
-        <button type="button" className="ghost" onClick={() => setShown((s) => !s)} aria-pressed={shown}>
-          {shown ? 'Hide' : 'Show'}<span className="sr-only"> password</span>
+        <button type="button" className="ghost" onClick={() => setShown((s) => !s)} aria-label={shown ? 'Hide password' : 'Show password'}>
+          {shown ? 'Hide' : 'Show'}
         </button>
       </div>
       {showMeter && (

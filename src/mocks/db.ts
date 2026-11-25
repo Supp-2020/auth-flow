@@ -40,19 +40,24 @@ export function persistDb() {
     }))
   } catch { /* ignore */ }
 }
-function loadDb() {
+/**
+ * Reload the mock "server" from localStorage. Called before every request so that several tabs
+ * (each with its own MSW instance and memory) behave like one shared backend.
+ */
+export function syncDb() {
   try {
     const raw = localStorage.getItem(DB_KEY)
     if (!raw) return
     const s = JSON.parse(raw)
     users.splice(0, users.length, ...s.users)
+    refreshTokens.clear(); resetTokens.clear(); verifyTokens.clear()
     s.refresh?.forEach(([k, v]: [string, never]) => refreshTokens.set(k, v))
     s.reset?.forEach(([k, v]: [string, never]) => resetTokens.set(k, v))
     s.verify?.forEach(([k, v]: [string, never]) => verifyTokens.set(k, v))
     mailbox.splice(0, mailbox.length, ...(s.mailbox ?? []))
   } catch { /* ignore corrupt state */ }
 }
-loadDb()
+syncDb()
 
 const b64 = (o: object) => btoa(JSON.stringify(o)).replace(/=+$/, '')
 export function signAccess(u: DbUser) {

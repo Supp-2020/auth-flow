@@ -1,8 +1,9 @@
 import { http, HttpResponse, delay } from 'msw'
-import { users, refreshTokens, signAccess, readAccess, newRefresh, persistDb, publicUser, resetTokens, verifyTokens, sendMail, RESET_TTL_MS, type DbUser, ACCESS_TTL_MS, MAX_ATTEMPTS, LOCK_MS } from './db'
+import { users, refreshTokens, signAccess, readAccess, newRefresh, persistDb, syncDb, publicUser, resetTokens, verifyTokens, sendMail, RESET_TTL_MS, type DbUser, ACCESS_TTL_MS, MAX_ATTEMPTS, LOCK_MS } from './db'
 
 const BASE = '/api'
-const lag = () => delay(300 + Math.random() * 700)
+// Realistic latency, then reload shared mock state (other tabs may have changed it meanwhile).
+const lag = async () => { await delay(300 + Math.random() * 700); syncDb() }
 
 /** Dev switch: localStorage['mock.fail'] = '500' | 'network' | 'timeout' */
 function forcedFailure() {
@@ -71,6 +72,7 @@ export const handlers = [
 
   http.post(`${BASE}/auth/refresh`, async ({ request }) => {
     await delay(150)
+    syncDb()
     const f = forcedFailure(); if (f) return f
     const b = (await request.json()) as { refreshToken?: string }
     const rec = b.refreshToken ? refreshTokens.get(b.refreshToken) : undefined
@@ -137,6 +139,42 @@ export const handlers = [
     const u = users.find((x) => x.email === b.email?.trim().toLowerCase())
     if (u && !u.verified) issueVerification(u)
     return HttpResponse.json({ message: 'If that account needs verification, we sent an email.' })
+  }),
+
+  http.patch(`${BASE}/me`, async ({ request }) => {
+    await lag()
+    const f = forcedFailure(); if (f) return f
+    const a = authedUser(request)
+    if (!a?.user) return HttpResponse.json({ message: 'Unauthenticated' }, { status: 401 })
+    const b = (await request.json()) as { name?: string }
+    const name = b.name?.trim() ?? ''
+    if (name.length < 2) return HttpResponse.json({ message: 'Invalid name', fieldErrors: { name: 'Name must be at least 2 characters' } }, { status: 422 })
+    a.user.name = name
+    persistDb()
+    return HttpResponse.json({ user: publicUser(a.user) })
+  }),
+
+  http.post(`${BASE}/auth/change-password`, async ({ request }) => {
+    await lag()
+    const f = forcedFailure(); if (f) return f
+    const a = authedUser(request)
+    if (!a?.user) return HttpResponse.json({ message: 'Unauthenticated' }, { status: 401 })
+    const b = (await request.json()) as { currentPassword?: string; newPassword?: string }
+    if (b.currentPassword !== a.user.password) {
+      return HttpResponse.json({ message: 'Current password is incorrect', fieldErrors: { currentPassword: 'Current password is incorrect' } }, { status: 400 })
+    }
+    a.user.password = b.newPassword ?? a.user.password
+    persistDb()
+    return HttpResponse.json({ message: 'Password changed' })
+  }),
+
+  http.post(`${BASE}/auth/logout-all`, async ({ request }) => {
+    await lag()
+    const a = authedUser(request)
+    if (!a?.user) return HttpResponse.json({ message: 'Unauthenticated' }, { status: 401 })
+    for (const [k, v] of refreshTokens) if (v.userId === a.user.id) refreshTokens.delete(k)
+    persistDb()
+    return new HttpResponse(null, { status: 204 })
   }),
 
   http.get(`${BASE}/admin/users`, async ({ request }) => {

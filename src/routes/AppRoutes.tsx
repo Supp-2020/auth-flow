@@ -6,7 +6,10 @@ import { ForgotPasswordPage } from '../features/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from '../features/auth/ResetPasswordPage'
 import { VerifyEmailPage } from '../features/auth/VerifyEmailPage'
 import { MockInboxPage } from '../features/auth/MockInboxPage'
-import { PublicOnly, RequireAuth } from './guards'
+import { ProfilePage } from '../features/auth/ProfilePage'
+import { AdminPage } from '../features/auth/AdminPage'
+import { ForbiddenPage, NotFoundPage } from '../features/auth/ErrorPages'
+import { PublicOnly, RequireAuth, RequireRole } from './guards'
 
 export function AppRoutes() {
   return (
@@ -22,9 +25,14 @@ export function AppRoutes() {
       <Route path="/mock-inbox" element={<MockInboxPage />} />
       <Route element={<RequireAuth />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/settings" element={<ProfilePage />} />
+        <Route element={<RequireRole role="admin" />}>
+          <Route path="/admin" element={<AdminPage />} />
+        </Route>
+        <Route path="/403" element={<ForbiddenPage />} />
       </Route>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }

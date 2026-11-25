@@ -55,6 +55,19 @@ export const resetSchema = z
   .object({ password: newPasswordSchema, confirmPassword: z.string().min(1, 'Confirm your password') })
   .refine((d) => d.password === d.confirmPassword, { path: ['confirmPassword'], message: 'Passwords do not match' })
 
+export const profileSchema = z.object({ name: z.string().trim().min(2, 'Name must be at least 2 characters').max(80) })
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Enter your current password'),
+    newPassword: newPasswordSchema,
+    confirmPassword: z.string().min(1, 'Confirm your new password'),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, { path: ['confirmPassword'], message: 'Passwords do not match' })
+  .refine((d) => d.newPassword !== d.currentPassword, { path: ['newPassword'], message: 'New password must be different' })
+
+export type ProfileInput = z.input<typeof profileSchema>
+export type ChangePasswordInput = z.input<typeof changePasswordSchema>
 export type ForgotInput = z.input<typeof forgotSchema>
 export type ResetInput = z.input<typeof resetSchema>
 export type LoginInput = z.input<typeof loginSchema>
